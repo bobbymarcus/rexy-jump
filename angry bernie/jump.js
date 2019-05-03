@@ -13,11 +13,13 @@ var leftSideScreen;
 // create variable to refer to obstacles
 var obstacles;
 // how often do i want obstacles to spawn?
-var spawnObstacleInterval = 500;	// half second
+var spawnObstacleInterval = 400;	// half second
 var lastSpawnTime;	// keep track of the last time spawn happened
 
 // a few global parameters we can freely adjust
+	  // how fast he falls
 var GRAVITY = 1;
+		// how high he jumps
 var JUMP = 15;
 
 // score counter
@@ -38,9 +40,11 @@ function preload() {
 	bernie.addAnimation("running", "assets_jump/bernie-walk-0.png", "assets_jump/bernie-walk-3.png");
 	bernie.addAnimation("jumping", "assets_jump/bernie-jump.png");
 	// he's too big so scale him down to 30%
-	bernie.scale = .3;
+	bernie.scale = .4;
 	// he runs too fast so put 6 frames between each image in sprite animation
 	bernie.animation.frameDelay = 6;
+
+	fontBarlow = loadFont('fonts/BarlowCondensed-Black.ttf');
 }
 
 function setup() {
@@ -48,18 +52,18 @@ function setup() {
 
 	// adjust bernie position
 	bernie.position.x = width / 4;
-	bernie.position.y = height - 100;
+	bernie.position.y = height - 50;
 
 	// just make a plain old "sprite" for the ground
 	// sprites draw from their center, so start at width/2
-	ground = createSprite(width / 2, height - 10, width, 10);
+	ground = createSprite(width / 2, height - 10, width, 100);
 
-	// tell the sketch that obstacles will be a 
+	// tell the sketch that obstacles will be a
 	// collection of things
 	obstacles = new Group();
 
 	// if hit left side screen delete object
-	leftSideScreen = createSprite(0, height/2, 10, height);
+	leftSideScreen = createSprite(0, height/2, 100, height);
 
 	// start counting from this moment (for spawns)
 	lastSpawnTime = millis();
@@ -67,14 +71,17 @@ function setup() {
 }
 
 function draw() {
-	background(80);
+	background(0,0,0);
 
 	// did the game end?
 	if(gameOver) {
-		fill(255,255,0);
+		fill(250,250,250);
+		textAlign(CENTER);
+		textFont(fontBarlow);
+		textSize(100);
 		text("GAME OVER", width/2, height/2);
-		text("you lasted " + endingScore + " seconds", width/2, height/2 + 20);
-
+		textSize(50);
+		text("YOU LASTED " + endingScore + " SECONDS", width/2, height/2 + 60);
 	} else {
 
 		// game still going, do stuff!
@@ -82,9 +89,14 @@ function draw() {
 		// score is how long youre alive
 		score = millis()/1000;
 
-		// show score in yellow
-		fill(255,255,0);
-		text("you have survived for " + int(score) + " seconds", 10, 10);
+		// styling for scoreboard text
+		fill(250,250,250);
+		textAlign(LEFT);
+		textFont(fontBarlow);
+		textSize(30);
+		text("SCORE:", 90, 50);
+		textSize(50);
+		text(int(score), 90, 100);
 
 		// gravity push down!
 		bernie.velocity.y += GRAVITY;
@@ -96,7 +108,7 @@ function draw() {
 		}
 
 		// if jump
-		if (keyWentDown("x") || mouseWentDown(LEFT)) {
+		if (keyWentDown("space") || mouseWentDown(LEFT)) {
 			bernie.changeAnimation("jumping");
 			bernie.velocity.y = -JUMP;
 		}
@@ -104,7 +116,7 @@ function draw() {
 		// spawn obstacles logic
 		if(millis() > lastSpawnTime + spawnObstacleInterval) {
 			// spawn new obstacle
-			var newSprite = createSprite(width, random(height), 20, 20);
+			var newSprite = createSprite(width, random(height), 50, 50);
 
 			// set the bounding box
 			newSprite.setCollider("rectangle", 0, 0, 20, 20);
@@ -153,5 +165,3 @@ function hitObstacle(collider1, collider2) {
 function deleteObstacle(col1, col2) {
 	col2.remove();
 }
-
-

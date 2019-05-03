@@ -20,7 +20,7 @@ var lastSpawnTime;	// keep track of the last time spawn happened
 	  // how fast he falls
 var GRAVITY = 1;
 		// how high he jumps
-var JUMP = 15;
+var JUMP = 20;
 
 // score counter
 var score = 0;
@@ -37,14 +37,18 @@ function preload() {
 	// we will change that later
 	bernie = createSprite();
 	// give him a couple animation types and specify where the files exist
-	bernie.addAnimation("running", "assets_jump/bernie-walk-0.png", "assets_jump/bernie-walk-3.png");
-	bernie.addAnimation("jumping", "assets_jump/bernie-jump.png");
+			// bernie.addAnimation("running", "assets_jump/bernie-walk-0.png", "assets_jump/bernie-walk-3.png");
+			// bernie.addAnimation("jumping", "assets_jump/bernie-jump.png");
+	bernie.addAnimation("running", "img/rexy/rexy_00000.png", "img/rexy/rexy_00008.png");
+	bernie.addAnimation("jumping", "img/rexy/rexy_00000.png");
 	// he's too big so scale him down to 30%
-	bernie.scale = .4;
+	bernie.scale = .6;
 	// he runs too fast so put 6 frames between each image in sprite animation
-	bernie.animation.frameDelay = 6;
+	bernie.animation.frameDelay = 4 ;
 
-	fontBarlow = loadFont('fonts/BarlowCondensed-Black.ttf');
+	fontMed = loadFont('fonts/BarlowCondensed-Medium.ttf');
+	fontBold = loadFont('fonts/BarlowCondensed-Black.ttf');
+
 }
 
 function setup() {
@@ -77,11 +81,12 @@ function draw() {
 	if(gameOver) {
 		fill(250,250,250);
 		textAlign(CENTER);
-		textFont(fontBarlow);
-		textSize(100);
-		text("GAME OVER", width/2, height/2);
+		textFont(fontBold);
+		textSize(130);
+		text("FUCK YOU", width/2, height/2);
+		textFont(fontMed);
 		textSize(50);
-		text("YOU LASTED " + endingScore + " SECONDS", width/2, height/2 + 60);
+		text("YOU ONLY LASTED " + endingScore + " SECONDS", width/2, height/2 + 70);
 	} else {
 
 		// game still going, do stuff!
@@ -92,7 +97,7 @@ function draw() {
 		// styling for scoreboard text
 		fill(250,250,250);
 		textAlign(LEFT);
-		textFont(fontBarlow);
+		textFont(fontBold);
 		textSize(30);
 		text("SCORE:", 90, 50);
 		textSize(50);
@@ -116,20 +121,17 @@ function draw() {
 		// spawn obstacles logic
 		if(millis() > lastSpawnTime + spawnObstacleInterval) {
 			// spawn new obstacle
-			var newSprite = createSprite(width, random(height), 50, 50);
-
+			var newSprite = createSprite(width, random(height), 40, 40);
+			// add image to the variable newSprite called "obstacle"
+			newSprite.addAnimation("obstacle", "img/hard78.png");
 			// set the bounding box
 			newSprite.setCollider("rectangle", 0, 0, 20, 20);
-
 			// give it a negative speed to go from right to left
-			newSprite.velocity.x = -7;
-
-			// show bounding box
-			//newSprite.debug = true;
-
+			newSprite.velocity.x = -15;
+			// show bounding box for debugging
+			newSprite.debug = false;
 			// add it to the obstacles group
 			obstacles.add(newSprite);
-
 			// reset timer
 			lastSpawnTime = millis();
 		}
@@ -153,7 +155,6 @@ function draw() {
 function hitObstacle(collider1, collider2) {
 	// game over!
 	gameOver = true;
-
 	// set score in stone, you dead.
 	endingScore = int(score);
 

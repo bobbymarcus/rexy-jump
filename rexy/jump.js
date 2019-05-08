@@ -77,7 +77,7 @@ function preload() {
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 
-  // button = createImg('https://res.cloudinary.com/dfiwfoxwx/image/upload/v1549657317/Life%20Coach/pause.png');
+  // button = createImg('');
   // button.mousePressed(pauseGame);
 
 	// adjust rexy position
@@ -99,6 +99,8 @@ function setup() {
 	lastSpawnTime = millis();
 
 	gameStartedTime = millis();
+
+	camera = rexy.position.x;
 
 }
 
@@ -134,9 +136,7 @@ function draw() {
 	}
 
 
-
 	else {
-
 		// gravity push down!
 		rexy.velocity.y += GRAVITY;
 
@@ -195,7 +195,6 @@ function draw() {
 }
 
 
-
 /*     _         _             _
       | |       | |           | |
   ___ | |__  ___| |_ __ _  ___| | ___  ___
@@ -219,6 +218,7 @@ function hitObstacle(collider1, collider2) {
 	// remove thing rexy collided with
 	collider2.velocity.x = 0;
 }
+
 
 /*
  _ __   _____      __   __ _  __ _ _ __ ___   ___

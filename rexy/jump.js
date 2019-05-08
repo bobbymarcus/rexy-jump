@@ -18,7 +18,6 @@ var gameOver = false;
 var gameOverButton; // variable for "restart" button
 
 
-
 /*
 ____ _  _ _  _ ____ ___ _ ____ _  _ ____
 |___ |  | |\ | |     |  | |  | |\ | [__

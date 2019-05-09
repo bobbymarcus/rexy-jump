@@ -2,7 +2,7 @@ button {
   position: absolute;
   left: 50%;
   top: 65%;
-  background-color: rgb(204, 204, 204);
+  background-color: rgba(204, 204, 204, 0);
   color: #000;
   border: 3px solid rgb(0, 0, 0);
   box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px;

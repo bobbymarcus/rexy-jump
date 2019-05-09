@@ -5,17 +5,22 @@ _  _ ____ ____ _ ____ ___  _    ____ ____
  */
 var rexy;
 var GRAVITY = 1; // how fast rexy falls
-var JUMP = 15; // how high rexy jumps
-var ground;
-var leftSideScreen; // sprite/collider for left side of screen so objects that go off left side get deleted
-var obstacles; // create variable to refer to obstacles group
-var spawnObstacleInterval = 300;	// how often new obstacles spawn
-var lastSpawnTime;	// keep track of the last osbtacle spawn
+var JUMP = 23; // how high rexy jumps
 var score = 0; // score counter
 var gameStartedTime = 0; // track how long each game lasts
 var mouseIsClicked = false; // variable to make rexy jump on click/tap
+var canJump = false;	// keep rexy from double jumping
 var gameOver = false;
 var gameOverButton; // variable for "restart" button
+var platforms;
+var platformSpawnInterval = 1400;
+var lastPlatformSpawned = 0;
+var offscreenLeft;	// destroy objects that go off left side
+var offscreenBottom;	// destroy objects that go off bottom
+var MIN_WORLD_SPEED = -10.0;	// how fast to buildings move? min
+var MAX_WORLD_SPEED = -40.0;// max
+var worldSpeed = MIN_WORLD_SPEED;	// current
+var PLATFORM_HEIGHT = 40;
 
 
 /*
@@ -24,22 +29,21 @@ ____ _  _ _  _ ____ ___ _ ____ _  _ ____
 |    |__| | \| |___  |  | |__| | \| ___]
 */
 function mousePressed() { // make rexy jump on click/tap
-	mouseisClicked = true;
-	rexy.changeAnimation("jumping");
-	rexy.velocity.y = -JUMP;
-}
-function deleteObstacle(col1, col2) { // delete obstacles that go off left side of screen
-	col2.remove();
-}
-function hitObstacle(collider1, collider2) { // if rexy collides with obstacle -> game over
-	gameOver = true;
-	collider2.velocity.x = 0; // remove obstacle that rexy collided with
+	if(canJump) {
+		mouseisClicked = true;
+		rexy.changeAnimation("jumping");
+		rexy.velocity.y = -JUMP;
+		canJump = false
+	}
 }
 function restartGame() { // reset sketch to start a new game
 	gameOver = false;
-	obstacles.removeSprites();
+	platforms.removeSprites();
 	gameOverButton.hide();
 	setup();
+}
+function deleteBuilding(offscreenLeftCollider, buildingCollider) {
+	buildingCollider.remove();
 }
 
 
@@ -54,7 +58,7 @@ function preload() {
 	rexy.addAnimation("running", "img/rexy-pixelated/rexy_00000.png", "img/rexy-pixelated/rexy_00008.png");
 	rexy.addAnimation("jumping", "img/rexy-pixelated/rexyjump.png");
 	rexy.scale = .4;
-	rexy.animation.frameDelay = 4;
+	rexy.animation.frameDelay = 2;
 	// load fonts
 	fontMed = loadFont('fonts/BarlowCondensed-Medium.ttf');
 	fontBold = loadFont('fonts/BarlowCondensed-Black.ttf');
@@ -68,14 +72,19 @@ ___] |___  |  |__| |
 */
 function setup() {
 	createCanvas(windowWidth, windowHeight);
+	bg = loadImage('img/backgroundEmpty-bw.png');
 	rexy.position.x = width/5; 	// rexy's starting position
 	rexy.position.y = height/2; 	// rexy's starting position
-	ground = createSprite(width/2, height - 10, width, height/2); // (x, y, width. height)
-	ground.shapeColor = 224, 224, 224;
-	leftSideScreen = createSprite(0, height/2, 0, height); // (x, y, width. height)
-	obstacles = new Group(); 	// tell the sketch that obstacles will be a collection of things
-	lastSpawnTime = millis(); // start counting from this moment (FOR OBSTACLE SPAWNS)
 	gameStartedTime = millis(); // start counting from this moment (FOR SCORE COUNTER)
+	platforms = new Group(); 	// tell the sketch that platforms will be a collection of things
+	var platform = createSprite(width / 3, height * .8, width, PLATFORM_HEIGHT); // (x,y,width, height)
+	platform.velocity.x = worldSpeed; // speed of platforms
+	platform.setCollider("rectangle", 0, 0, width, PLATFORM_HEIGHT);
+	platform.shapeColor = color(random(100),random(255),random(255));
+	platforms.add(platform); 	// add to platforms group
+	lastPlatformSpawned = -10000; 	// spawn one immediately, trick program into thinking it spawned one a long time ago
+	offscreenLeft = createSprite(-1500, height/2, 10, height);
+	offscreenBottom = createSprite(width/2, height + 20, width, 10);
 }
 
 
@@ -86,11 +95,11 @@ ___  ____ ____ _ _ _
 */
 function draw() {
 	background(204,204,204); // background color of sketch canvas
+	background(bg); // sets bg to image
 
-	/* -+-+-+ +-+-+-+-+
-  |G|A|M|E| |O|V|E|R|
-  +-+-+-+-+ +-+-+-+ */
 	if(gameOver) {
+		canJump = false;
+
 		if(!gameOverButton){ // create button to restart game
 			gameOverButton = createButton('TRY AGAIN');
 		}
@@ -107,9 +116,6 @@ function draw() {
 		text("YOU LASTED " + score + " SECONDS", width/2, height/2 + 50);
 	} //if(gameOver)
 
-	/* +-+-+-+-+-+-+
-  |P|L|A|Y|I|N|G|
-  +-+-+-+-+-+-+ */
 	else {
 		drawSprites(); // needed for p5.play to work - (updates all your sprite objects)
 
@@ -122,25 +128,31 @@ function draw() {
 			textSize(50);
 			text(score, 30, 100);
 
-		mouseisClicked = false; // (REFER TO FUNCTION: mousePressed) - makes rexy jump on click/tap
 		rexy.velocity.y += GRAVITY; // use gravity to push down when rexy jumps
-		if (rexy.collide(ground)) { // make rexy run when on the ground
-			rexy.changeAnimation("running");
-			rexy.velocity.y = 0;
-		}
+		mouseisClicked = false; // (REFER TO FUNCTION: mousePressed) - makes rexy jump on click/tap
 
-		if(millis() > lastSpawnTime + spawnObstacleInterval) { // logic for spawning obstacles
-			var newSprite = createSprite(width, random(height/1.5), 40, 40); // spawn new obstacle
-			newSprite.addAnimation("obstacle", "img/coach.png"); // add image to the variable newSprite called "obstacle"
-			newSprite.scale = 1.5; 	// scale "obstacle" image
-			newSprite.setCollider("rectangle",0, 0, 30, 20); // set the bounding box of obstacle
-			newSprite.velocity.x = -12; // speed that the obstacles move at
-			obstacles.add(newSprite); // add newSprite to the group "obstacles"
-			lastSpawnTime = millis(); // reset timer every time a new obstacle spawns
-			newSprite.debug = false; // (for debugging) - show bounding box
+		if (millis() > lastPlatformSpawned + platformSpawnInterval) {
+			var platformWidth = width/4;
+			var platformY = random(height*.5, height*.8);
+			var platform = createSprite(width + platformWidth / 2, platformY, platformWidth, PLATFORM_HEIGHT);
+			platform.velocity.x = worldSpeed;
+			platform.setCollider("rectangle", 0, 0, platformWidth, PLATFORM_HEIGHT);
+			platform.shapeColor = color(random(100),random(255),random(255));;
+			platforms.add(platform);
+			lastPlatformSpawned = millis();
+			worldSpeed = constrain(worldSpeed - .2, MAX_WORLD_SPEED, MIN_WORLD_SPEED); // increase speed of platforms going by
+			platformSpawnInterval = map(worldSpeed, MIN_WORLD_SPEED, MAX_WORLD_SPEED, 1400, 1400/3.6); // increase frequency of platform spawns
+			// platform.debug = true;
 		}
-		rexy.overlap(obstacles, hitObstacle); // if rexy overlaps with anything in obstacles group -> call hitObstacle function
-		leftSideScreen.overlap(obstacles, deleteObstacle); // if obstacles hit left side of screen -> call deleteObstacle function
+		if (rexy.collide(platforms)) { // run when on top of a platform
+			canJump = true; // touched a platform, now you can jump again
+			rexy.changeAnimation("running");
+			rexy.velocity.y = 0; // if on a platform, dont let gravity push down
+		}
+		if(rexy.collide(offscreenBottom) || rexy.position.x < 0) { // game ends if you fall off bottom or left side
+			gameOver = true;
+		}
+		offscreenLeft.collide(platforms, deleteBuilding); // delete any offscreen platforms
 	} //else
 } //draw
 

@@ -20,7 +20,8 @@ var offscreenBottom;	// destroy objects that go off bottom
 var MIN_WORLD_SPEED = -10.0;	// how fast to buildings move? min
 var MAX_WORLD_SPEED = -40.0;// max
 var worldSpeed = MIN_WORLD_SPEED;	// current
-var PLATFORM_HEIGHT = 40;
+var PLATFORM_HEIGHT = 30;
+var PLATFORM_WIDTH = 500;
 
 
 /*
@@ -41,6 +42,13 @@ function restartGame() { // reset sketch to start a new game
 	platforms.removeSprites();
 	gameOverButton.hide();
 	setup();
+	MIN_WORLD_SPEED = -10.0;
+	worldSpeed = MIN_WORLD_SPEED;
+	platform.velocity.x = worldSpeed;
+	platformSpawnInterval = map(worldSpeed, MIN_WORLD_SPEED, MAX_WORLD_SPEED, 1400, 1400/3.6);
+	updateSprites(true);
+	lastPlatformSpawned = -1000;
+
 }
 function deleteBuilding(offscreenLeftCollider, buildingCollider) {
 	buildingCollider.remove();
@@ -59,6 +67,7 @@ function preload() {
 	rexy.addAnimation("jumping", "img/rexy-pixelated/rexyjump.png");
 	rexy.scale = .4;
 	rexy.animation.frameDelay = 2;
+	bg = loadImage('img/backgroundEmpty.png');
 	// load fonts
 	fontMed = loadFont('fonts/BarlowCondensed-Medium.ttf');
 	fontBold = loadFont('fonts/BarlowCondensed-Black.ttf');
@@ -72,7 +81,6 @@ ___] |___  |  |__| |
 */
 function setup() {
 	createCanvas(windowWidth, windowHeight);
-	bg = loadImage('img/backgroundEmpty-bw.png');
 	rexy.position.x = width/5; 	// rexy's starting position
 	rexy.position.y = height/2; 	// rexy's starting position
 	gameStartedTime = millis(); // start counting from this moment (FOR SCORE COUNTER)
@@ -80,11 +88,24 @@ function setup() {
 	var platform = createSprite(width / 3, height * .8, width, PLATFORM_HEIGHT); // (x,y,width, height)
 	platform.velocity.x = worldSpeed; // speed of platforms
 	platform.setCollider("rectangle", 0, 0, width, PLATFORM_HEIGHT);
-	platform.shapeColor = color(random(100),random(255),random(255));
+	platform.shapeColor = color(random(0),random(),random(50,255));
 	platforms.add(platform); 	// add to platforms group
 	lastPlatformSpawned = -10000; 	// spawn one immediately, trick program into thinking it spawned one a long time ago
-	offscreenLeft = createSprite(-1500, height/2, 10, height);
+	offscreenLeft = createSprite(-width, height/2, 10, height); // (x,y,width, height)
 	offscreenBottom = createSprite(width/2, height + 20, width, 10);
+	// responsive
+	mobileMax = 500;
+	w = windowWidth;
+	if (w < mobileMax) {
+		rexy.position.x = 100;
+		rexy.scale = .3;
+		PLATFORM_HEIGHT = 30;
+		PLATFORM_WIDTH = 500;
+		lastPlatformSpawned = -200;
+		platform.position.x = 400;
+		platform.width = width*2;
+		platform.setCollider("rectangle", 0, 0, width*2, PLATFORM_HEIGHT);
+	}
 }
 
 
@@ -132,12 +153,11 @@ function draw() {
 		mouseisClicked = false; // (REFER TO FUNCTION: mousePressed) - makes rexy jump on click/tap
 
 		if (millis() > lastPlatformSpawned + platformSpawnInterval) {
-			var platformWidth = width/4;
 			var platformY = random(height*.5, height*.8);
-			var platform = createSprite(width + platformWidth / 2, platformY, platformWidth, PLATFORM_HEIGHT);
+			var platform = createSprite(width + PLATFORM_WIDTH / 2, platformY, PLATFORM_WIDTH, PLATFORM_HEIGHT);
 			platform.velocity.x = worldSpeed;
-			platform.setCollider("rectangle", 0, 0, platformWidth, PLATFORM_HEIGHT);
-			platform.shapeColor = color(random(100),random(255),random(255));;
+			platform.setCollider("rectangle", 0, 0, PLATFORM_WIDTH, PLATFORM_HEIGHT);
+			platform.shapeColor = color(random(0),random(0),random(50,255));;
 			platforms.add(platform);
 			lastPlatformSpawned = millis();
 			worldSpeed = constrain(worldSpeed - .2, MAX_WORLD_SPEED, MIN_WORLD_SPEED); // increase speed of platforms going by
